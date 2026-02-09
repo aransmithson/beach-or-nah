@@ -8,8 +8,6 @@ A trendy zero-click tide monitoring app built with Python and Streamlit.
 - 🌊 Real-time tide data from UK Environment Agency API
 - 🎨 Trendy retro-futuristic design
 - 📊 Visual beach/water ratio display
-- 🐛 Built-in API debug panel
-- ⚡ Instant verdict: BEACH!, NAH., or MAYBE?
 
 ## Installation
 
@@ -21,21 +19,13 @@ pip install -r requirements.txt
 ## Running the App
 
 ```bash
-streamlit run beach_or_nah_app.py
+streamlit run app.py
 ```
-
-The app will open in your browser at `http://localhost:8501`
 
 ## How to Use
 
-### Option 1: Auto-Location (Recommended)
-1. Click "📍 Use My Current Location"
-2. Allow location access in your browser
-3. Click "🌊 Check Tide Conditions"
-
-### Option 2: Manual Entry
-1. Enter your latitude and longitude manually
-2. Click "🌊 Check Tide Conditions"
+### Auto-Location (Recommended)
+Click "📍 Use My Current Location"
 
 The app will:
 - Find the nearest UK tide gauge station
@@ -58,11 +48,6 @@ The app uses the UK Environment Agency Flood Monitoring API:
 
 All API responses are visible in the debug panel at the bottom of the app.
 
-## Verdict Logic
-
-- **BEACH!** - Tide is low (<30%) or falling and mid-level
-- **NAH.** - Tide is high (>70%)
-- **MAYBE?** - Tide is mid-level and rising
 
 ## Design
 
