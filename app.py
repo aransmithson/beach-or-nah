@@ -114,6 +114,7 @@ st.markdown("""
         letter-spacing: 1px;
     }
 </style>
+<script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "7eb348d6a4d64d1595ba7ed828a4ad13"}'></script>
 """, unsafe_allow_html=True)
 
 def calculate_distance(lat1, lon1, lat2, lon2):
