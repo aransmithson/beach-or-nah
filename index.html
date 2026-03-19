@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Beach or Nah?</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      background: linear-gradient(160deg, #ff9a6c 0%, #ffd6ba 40%, #f4e4c1 100%);
+      font-family: 'Space Mono', monospace;
+      color: white;
+      overflow-x: hidden;
+    }
+
+    /* ── Header ── */
+    header {
+      text-align: center;
+      padding: 40px 20px 10px;
+    }
+    h1 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(52px, 10vw, 88px);
+      letter-spacing: 10px;
+      color: #fff;
+      text-shadow: 4px 4px 16px rgba(0,0,0,0.35);
+      line-height: 1;
+    }
+    .subtitle {
+      font-size: 12px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.7);
+      margin-top: 8px;
+    }
+
+    /* ── Card ── */
+    .card {
+      background: rgba(255,255,255,0.12);
+      backdrop-filter: blur(14px);
+      border: 1px solid rgba(255,255,255,0.25);
+      border-radius: 24px;
+      padding: 28px;
+    }
+
+    /* ── Location panel ── */
+    .location-panel {
+      max-width: 540px;
+      margin: 32px auto 0;
+      padding: 0 16px;
+    }
+    .panel-label {
+      font-size: 11px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.6);
+      margin-bottom: 16px;
+      text-align: center;
+    }
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 14px 24px;
+      border: none;
+      border-radius: 50px;
+      font-family: 'Space Mono', monospace;
+      font-weight: 700;
+      font-size: 13px;
+      letter-spacing: 1px;
+      cursor: pointer;
+      transition: transform 0.12s, box-shadow 0.12s;
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn-primary {
+      background: #2a9d8f;
+      color: white;
+      box-shadow: 0 4px 18px rgba(42,157,143,0.45);
+    }
+    .btn-primary:hover { box-shadow: 0 6px 24px rgba(42,157,143,0.6); }
+    .btn-secondary {
+      background: rgba(255,255,255,0.15);
+      color: white;
+      border: 1px solid rgba(255,255,255,0.3);
+      margin-top: 10px;
+    }
+    .btn-secondary:hover { background: rgba(255,255,255,0.22); }
+
+    .coords-row {
+      display: flex;
+      gap: 12px;
+      margin-top: 14px;
+    }
+    .field {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .field label {
+      font-size: 10px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.6);
+    }
+    .field input {
+      background: rgba(0,0,0,0.2);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 12px;
+      padding: 10px 14px;
+      color: white;
+      font-family: 'Space Mono', monospace;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .field input:focus { border-color: rgba(42,157,143,0.8); }
+    .field input::placeholder { color: rgba(255,255,255,0.35); }
+
+    /* API key row */
+    .api-row {
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+      margin-top: 14px;
+    }
+    .api-row .field { flex: 1; }
+    .api-save-btn {
+      padding: 10px 18px;
+      border-radius: 12px;
+      font-size: 11px;
+      white-space: nowrap;
+      width: auto;
+    }
+    .api-hint {
+      font-size: 10px;
+      color: rgba(255,255,255,0.45);
+      margin-top: 6px;
+      text-align: right;
+    }
+    .api-hint a { color: #7dd3c0; }
+
+    /* Status messages */
+    #status-msg {
+      text-align: center;
+      font-size: 12px;
+      min-height: 20px;
+      margin-top: 12px;
+      color: rgba(255,255,255,0.75);
+      transition: opacity 0.3s;
+    }
+    #status-msg.error { color: #ff8585; }
+    #status-msg.success { color: #7dd3c0; }
+
+    /* ── Results ── */
+    #results {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 0 16px 60px;
+      display: none;
+    }
+
+    .station-label {
+      text-align: center;
+      font-size: 12px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: rgba(26,70,69,0.9);
+      margin: 20px 0 0;
+    }
+
+    .verdict {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(80px, 18vw, 130px);
+      text-align: center;
+      background: linear-gradient(135deg, #ffd700, #ffed4e);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 0 24px rgba(255,215,0,0.55));
+      letter-spacing: 6px;
+      line-height: 1;
+      margin: 16px 0 24px;
+    }
+
+    /* Weather panel */
+    #weather-panel {
+      margin-bottom: 16px;
+    }
+    .weather-grid {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .w-item { text-align: center; }
+    .w-icon { font-size: 42px; display: block; margin-bottom: 4px; }
+    .w-label {
+      font-size: 10px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.6);
+      margin-bottom: 4px;
+    }
+    .w-value { font-size: 22px; font-weight: 700; }
+    .w-sub { font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 2px; }
+
+    /* Tide panel */
+    .tide-grid {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .t-item { text-align: center; }
+    .t-label {
+      font-size: 10px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.6);
+      margin-bottom: 4px;
+    }
+    .t-value { font-size: 26px; font-weight: 700; }
+
+    /* Canvas */
+    #wave-canvas {
+      width: 100%;
+      height: 380px;
+      border-radius: 24px;
+      display: block;
+      margin: 20px 0;
+      box-shadow: 0 12px 48px rgba(0,0,0,0.25);
+    }
+
+    /* Debug */
+    details {
+      margin-top: 8px;
+    }
+    summary {
+      cursor: pointer;
+      font-size: 11px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.5);
+      padding: 10px 0;
+      user-select: none;
+    }
+    #debug-content {
+      background: rgba(0,0,0,0.8);
+      color: #7dd3c0;
+      border-radius: 14px;
+      padding: 20px;
+      font-size: 11px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    /* Spinner */
+    .spinner {
+      display: inline-block;
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Cloudflare beacon */
+    .cf-beacon { display: none; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>BEACH OR NAH?</h1>
+  <p class="subtitle">Real-time tides &amp; weather for your location</p>
+</header>
+
+<!-- Location + settings panel -->
+<div class="location-panel">
+  <div class="card">
+    <p class="panel-label">📍 Your Location</p>
+    <button class="btn btn-primary" id="geo-btn">📍 Use My Current Location</button>
+    <div class="coords-row">
+      <div class="field">
+        <label>Latitude</label>
+        <input type="number" id="lat-input" step="0.0001" placeholder="52.4767" />
+      </div>
+      <div class="field">
+        <label>Longitude</label>
+        <input type="number" id="lon-input" step="0.0001" placeholder="1.7514" />
+      </div>
+    </div>
+
+    <!-- OpenWeather key -->
+    <div class="api-row">
+      <div class="field">
+        <label>OpenWeather API Key</label>
+        <input type="password" id="ow-key" placeholder="Paste your key (saved locally)" />
+      </div>
+      <button class="btn btn-secondary api-save-btn" id="save-key-btn">Save</button>
+    </div>
+    <p class="api-hint">Free key at <a href="https://openweathermap.org/api" target="_blank">openweathermap.org</a> — saved in your browser</p>
+
+    <div id="status-msg"></div>
+    <button class="btn btn-secondary" id="check-btn" style="margin-top:18px;">🌊 Check Conditions</button>
+  </div>
+</div>
+
+<!-- Results (hidden until data loads) -->
+<div id="results">
+  <p class="station-label" id="station-label"></p>
+  <div class="verdict" id="verdict-text"></div>
+
+  <!-- Weather card -->
+  <div class="card" id="weather-panel" style="margin-bottom:16px; display:none;">
+    <p class="panel-label" id="weather-title">🌤️ Current Weather</p>
+    <div class="weather-grid" id="weather-grid"></div>
+  </div>
+
+  <!-- Tide card -->
+  <div class="card" id="tide-panel">
+    <p class="panel-label" id="tide-title">🌊 Tide Conditions</p>
+    <div class="tide-grid" id="tide-grid"></div>
+  </div>
+
+  <!-- Wave canvas -->
+  <canvas id="wave-canvas"></canvas>
+
+  <!-- Debug -->
+  <details>
+    <summary>📡 API Debug Info</summary>
+    <pre id="debug-content"></pre>
+  </details>
+</div>
+
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js"
+  data-cf-beacon='{"token": "7eb348d6a4d64d1595ba7ed828a4ad13"}'></script>
+
+<script>
+// ─── State ────────────────────────────────────────────────────────────────────
+const state = {
+  lat: null, lon: null,
+  station: null, tideData: null, weatherData: null,
+  animFrame: null
+};
+
+// ─── DOM refs ─────────────────────────────────────────────────────────────────
+const geoBtn    = document.getElementById('geo-btn');
+const checkBtn  = document.getElementById('check-btn');
+const latInput  = document.getElementById('lat-input');
+const lonInput  = document.getElementById('lon-input');
+const owKeyEl   = document.getElementById('ow-key');
+const saveKeyBtn= document.getElementById('save-key-btn');
+const statusEl  = document.getElementById('status-msg');
+const resultsEl = document.getElementById('results');
+const verdictEl = document.getElementById('verdict-text');
+const stationLbl= document.getElementById('station-label');
+const weatherPanel = document.getElementById('weather-panel');
+const weatherGrid  = document.getElementById('weather-grid');
+const weatherTitle = document.getElementById('weather-title');
+const tideGrid  = document.getElementById('tide-grid');
+const tideTitle = document.getElementById('tide-title');
+const debugEl   = document.getElementById('debug-content');
+const canvas    = document.getElementById('wave-canvas');
+const ctx       = canvas.getContext('2d');
+
+// ─── Persist API key ──────────────────────────────────────────────────────────
+owKeyEl.value = localStorage.getItem('ow_api_key') || '';
+saveKeyBtn.addEventListener('click', () => {
+  const k = owKeyEl.value.trim();
+  if (k) { localStorage.setItem('ow_api_key', k); setStatus('✅ API key saved', 'success'); }
+  else    { localStorage.removeItem('ow_api_key'); setStatus('Key cleared', ''); }
+});
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+function setStatus(msg, type = '') {
+  statusEl.textContent = msg;
+  statusEl.className = type;
+}
+
+function haversine(lat1, lon1, lat2, lon2) {
+  const R = 6371, toR = Math.PI / 180;
+  const dLat = (lat2 - lat1) * toR, dLon = (lon2 - lon1) * toR;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*toR)*Math.cos(lat2*toR)*Math.sin(dLon/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+function windDir(deg) {
+  return ['N','NE','E','SE','S','SW','W','NW'][Math.round(deg/45) % 8];
+}
+
+function weatherEmoji(condition, icon) {
+  const map = {
+    Thunderstorm:'⛈️', Drizzle:'🌦️', Rain:'🌧️', Snow:'❄️',
+    Mist:'🌫️', Fog:'🌫️', Haze:'🌫️', Smoke:'🌫️', Dust:'🌫️',
+    Clear:'☀️'
+  };
+  if (map[condition]) return map[condition];
+  if (condition === 'Clouds') return icon.includes('02') || icon.includes('03') ? '⛅' : '☁️';
+  return '🌤️';
+}
+
+// ─── Geolocation ──────────────────────────────────────────────────────────────
+geoBtn.addEventListener('click', () => {
+  if (!navigator.geolocation) { setStatus('Geolocation not supported — enter manually', 'error'); return; }
+  geoBtn.innerHTML = '<span class="spinner"></span>Getting location…';
+  geoBtn.disabled = true;
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      state.lat = pos.coords.latitude;
+      state.lon = pos.coords.longitude;
+      latInput.value = state.lat.toFixed(4);
+      lonInput.value = state.lon.toFixed(4);
+      setStatus(`✅ Location: ${state.lat.toFixed(4)}, ${state.lon.toFixed(4)}`, 'success');
+      geoBtn.innerHTML = '📍 Use My Current Location';
+      geoBtn.disabled = false;
+    },
+    err => {
+      setStatus('⚠️ Location denied — enter manually', 'error');
+      geoBtn.innerHTML = '📍 Use My Current Location';
+      geoBtn.disabled = false;
+    },
+    { timeout: 10000 }
+  );
+});
+
+// ─── Main check ───────────────────────────────────────────────────────────────
+checkBtn.addEventListener('click', async () => {
+  const lat = parseFloat(latInput.value);
+  const lon = parseFloat(lonInput.value);
+  if (isNaN(lat) || isNaN(lon)) { setStatus('⚠️ Enter valid coordinates', 'error'); return; }
+  state.lat = lat; state.lon = lon;
+
+  checkBtn.innerHTML = '<span class="spinner"></span>Finding your nearest beach…';
+  checkBtn.disabled = true;
+  setStatus('');
+
+  try {
+    const [station, weather] = await Promise.all([
+      findNearestStation(lat, lon),
+      fetchWeather(lat, lon)
+    ]);
+
+    if (!station) throw new Error('No tide station found near your location');
+    state.station = station;
+    state.weatherData = weather;
+
+    const tide = await fetchTide(station.id);
+    if (!tide) throw new Error(`No tide data for ${station.name}`);
+    state.tideData = tide;
+
+    renderResults();
+  } catch(e) {
+    setStatus(`❌ ${e.message}`, 'error');
+  } finally {
+    checkBtn.innerHTML = '🌊 Check Conditions';
+    checkBtn.disabled = false;
+  }
+});
+
+// ─── API: Tide station ────────────────────────────────────────────────────────
+async function findNearestStation(lat, lon) {
+  const res = await fetch(
+    'https://environment.data.gov.uk/flood-monitoring/id/stations?type=TideGauge&_limit=1000'
+  );
+  const data = await res.json();
+  if (!data.items?.length) return null;
+
+  let best = null, minDist = Infinity;
+  for (const s of data.items) {
+    if (s.lat == null || s.long == null) continue;
+    const d = haversine(lat, lon, s.lat, s.long);
+    if (d < minDist) {
+      minDist = d;
+      best = { id: s.stationReference || s.notation, name: s.label, lat: s.lat, lon: s.long, distance: d };
+    }
+  }
+  return best;
+}
+
+// ─── API: Tide readings ───────────────────────────────────────────────────────
+async function fetchTide(stationId) {
+  const url = `https://environment.data.gov.uk/flood-monitoring/id/stations/${stationId}/readings?_sorted&_limit=10`;
+  const res  = await fetch(url);
+  const data = await res.json();
+
+  if (data.items?.length >= 2) {
+    const [latest, prev] = data.items;
+    return { current: latest.value, previous: prev.value, time: latest.dateTime,
+             rising: latest.value > prev.value, raw: data };
+  }
+
+  // Fallback: look through measures
+  const sRes  = await fetch(`https://environment.data.gov.uk/flood-monitoring/id/stations/${stationId}`);
+  const sData = await sRes.json();
+  for (const m of (sData.measures || [])) {
+    const mid = m['@id'] || '';
+    if (!mid.toLowerCase().includes('level') && !mid.toLowerCase().includes('tidal')) continue;
+    const rRes  = await fetch(`${mid}/readings?_sorted&_limit=10`);
+    const rData = await rRes.json();
+    if (rData.items?.length >= 2) {
+      const [latest, prev] = rData.items;
+      return { current: latest.value, previous: prev.value, time: latest.dateTime,
+               rising: latest.value > prev.value, raw: rData };
+    }
+  }
+  return null;
+}
+
+// ─── API: OpenWeather ─────────────────────────────────────────────────────────
+async function fetchWeather(lat, lon) {
+  const key = owKeyEl.value.trim() || localStorage.getItem('ow_api_key');
+  if (!key) return null;
+  try {
+    const res  = await fetch(
+      `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${key}&units=metric`
+    );
+    if (!res.ok) throw new Error(`OpenWeather ${res.status}`);
+    const d = await res.json();
+    return {
+      temp:        d.main.temp,
+      feelsLike:   d.main.feels_like,
+      humidity:    d.main.humidity,
+      windSpeed:   d.wind.speed * 3.6,   // m/s → km/h
+      windDeg:     d.wind.deg || 0,
+      description: d.weather[0].description.replace(/\b\w/g, c => c.toUpperCase()),
+      condition:   d.weather[0].main,
+      icon:        d.weather[0].icon,
+      city:        d.name || '',
+      visibility:  (d.visibility || 10000) / 1000,
+      raw:         d
+    };
+  } catch(e) {
+    console.warn('Weather fetch failed:', e);
+    return null;
+  }
+}
+
+// ─── Verdict logic ────────────────────────────────────────────────────────────
+function getVerdict(waterPct, rising, weather) {
+  let v = waterPct < 30 ? 'BEACH!'
+        : waterPct < 60 && !rising ? 'BEACH!'
+        : waterPct > 70 ? 'NAH.'
+        : 'MAYBE?';
+
+  if (!weather) return v;
+  const bad = ['Thunderstorm','Rain','Drizzle','Snow'];
+  if (bad.includes(weather.condition)) return 'NAH.';
+  if (weather.windSpeed > 55)          return 'NAH.';
+  if (weather.windSpeed > 35 && v === 'BEACH!') return 'MAYBE?';
+  if (weather.temp < 10)               return v === 'BEACH!' ? 'NAH.' : v;
+  if (weather.temp < 15 && v === 'BEACH!') return 'MAYBE?';
+  return v;
+}
+
+// ─── Render results ───────────────────────────────────────────────────────────
+function renderResults() {
+  const { station, tideData, weatherData } = state;
+  const maxH = 8;
+  const waterPct = Math.min(Math.max(tideData.current / maxH * 100, 0), 100);
+
+  // Station label
+  stationLbl.textContent = `${station.name} • ${station.distance.toFixed(1)}km away`;
+
+  // Verdict
+  verdictEl.textContent = getVerdict(waterPct, tideData.rising, weatherData);
+
+  // Weather
+  if (weatherData) {
+    const w = weatherData;
+    weatherTitle.textContent = `🌤️ Current Weather — ${w.city}`;
+    weatherGrid.innerHTML = `
+      <div class="w-item">
+        <span class="w-icon">${weatherEmoji(w.condition, w.icon)}</span>
+        <div class="w-value" style="font-size:15px;">${w.description}</div>
+      </div>
+      <div class="w-item">
+        <div class="w-label">Temp</div>
+        <div class="w-value">${Math.round(w.temp)}°C</div>
+        <div class="w-sub">feels ${Math.round(w.feelsLike)}°C</div>
+      </div>
+      <div class="w-item">
+        <div class="w-label">Wind</div>
+        <div class="w-value">${Math.round(w.windSpeed)} km/h</div>
+        <div class="w-sub">${windDir(w.windDeg)}</div>
+      </div>
+      <div class="w-item">
+        <div class="w-label">Humidity</div>
+        <div class="w-value">${w.humidity}%</div>
+      </div>
+      <div class="w-item">
+        <div class="w-label">Visibility</div>
+        <div class="w-value">${w.visibility.toFixed(0)} km</div>
+      </div>
+    `;
+    weatherPanel.style.display = '';
+  } else {
+    weatherPanel.style.display = 'none';
+  }
+
+  // Tide
+  const dir = tideData.rising ? 'Rising ⬆️' : 'Falling ⬇️';
+  const tideTime = new Date(tideData.time).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+  tideTitle.textContent = `🌊 Tide Conditions — ${station.name}`;
+  tideGrid.innerHTML = `
+    <div class="t-item"><div class="t-label">Status</div><div class="t-value">${dir}</div></div>
+    <div class="t-item"><div class="t-label">Height</div><div class="t-value">${tideData.current.toFixed(2)}m</div></div>
+    <div class="t-item"><div class="t-label">Beach cover</div><div class="t-value">${Math.round(waterPct)}%</div></div>
+    <div class="t-item"><div class="t-label">Time</div><div class="t-value">${tideTime}</div></div>
+  `;
+
+  // Debug
+  debugEl.textContent = JSON.stringify({
+    location:  { lat: state.lat, lon: state.lon },
+    station,
+    tide:      tideData.raw,
+    weather:   weatherData?.raw || null
+  }, null, 2);
+
+  // Show results
+  resultsEl.style.display = 'block';
+  resultsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  // Start wave animation
+  startWaves(waterPct, tideData.rising, weatherData);
+}
+
+// ─── Wave animation ───────────────────────────────────────────────────────────
+function startWaves(waterPct, rising, weather) {
+  if (state.animFrame) cancelAnimationFrame(state.animFrame);
+
+  // Size canvas to its display size
+  const resize = () => {
+    canvas.width  = canvas.offsetWidth  * devicePixelRatio;
+    canvas.height = canvas.offsetHeight * devicePixelRatio;
+  };
+  resize();
+  window.addEventListener('resize', resize);
+
+  const wind      = weather?.windSpeed || 10;
+  const condition = weather?.condition || 'Clear';
+  const stormy    = ['Thunderstorm','Rain'].includes(condition);
+  const rainy     = ['Rain','Drizzle'].includes(condition);
+
+  // Wave amplitude — scales with tide level AND wind
+  const amp = 22 + (waterPct / 100) * 60 + Math.min(wind / 60, 1) * 28;
+  const layers = stormy ? 5 : rainy ? 4 : 3;
+
+  // Sky colours
+  const skyPalette = stormy ? ['#22222e','#3a3a4e'] :
+                     rainy  ? ['#7a8fa6','#b0c4d8'] :
+                     condition === 'Clouds' ? ['#9ab8cc','#cce0ef'] :
+                                             ['#6ec6ea','#f4dfc0'];
+  const showSun = !stormy && !rainy && condition !== 'Clouds';
+
+  // Seagulls
+  const birds = Array.from({ length: wind > 20 ? 4 : 2 }, () => ({
+    x:     Math.random() * 3000,
+    y:     0.06 + Math.random() * 0.18,
+    speed: (0.5 + Math.random() * 0.7 + wind * 0.018) * devicePixelRatio,
+    amp:   9 + Math.random() * 14,
+    freq:  0.014 + Math.random() * 0.01,
+    phase: Math.random() * Math.PI * 2,
+    size:  (7 + Math.random() * 5) * devicePixelRatio
+  }));
+
+  let t = 0;
+
+  function frame() {
+    const W = canvas.width, H = canvas.height;
+    ctx.clearRect(0, 0, W, H);
+
+    const dpr  = devicePixelRatio;
+    const ampD = amp * dpr;
+
+    // Sky
+    const skyGrad = ctx.createLinearGradient(0, 0, 0, H * 0.58);
+    skyGrad.addColorStop(0, skyPalette[0]);
+    skyGrad.addColorStop(1, skyPalette[1]);
+    ctx.fillStyle = skyGrad;
+    ctx.fillRect(0, 0, W, H);
+
+    // Sun
+    if (showSun) {
+      const sx = W * 0.84, sy = H * 0.18, sr = 38 * dpr;
+      const glow = ctx.createRadialGradient(sx, sy, sr * 0.1, sx, sy, sr * 2.8);
+      glow.addColorStop(0, 'rgba(255,230,50,0.3)');
+      glow.addColorStop(1, 'rgba(255,200,30,0)');
+      ctx.beginPath(); ctx.arc(sx, sy, sr * 2.8, 0, Math.PI * 2);
+      ctx.fillStyle = glow; ctx.fill();
+      const core = ctx.createRadialGradient(sx, sy, 0, sx, sy, sr);
+      core.addColorStop(0,   'rgba(255,248,160,1)');
+      core.addColorStop(0.5, 'rgba(255,220,50,1)');
+      core.addColorStop(1,   'rgba(255,180,0,0.8)');
+      ctx.beginPath(); ctx.arc(sx, sy, sr, 0, Math.PI * 2);
+      ctx.fillStyle = core; ctx.fill();
+    }
+
+    // Sand
+    const sandY = H * 0.58;
+    const sandGrad = ctx.createLinearGradient(0, sandY, 0, H);
+    sandGrad.addColorStop(0, '#f4e4c1');
+    sandGrad.addColorStop(0.45, '#e8d5a8');
+    sandGrad.addColorStop(1,   '#c9a87a');
+    ctx.fillStyle = sandGrad;
+    ctx.fillRect(0, sandY, W, H - sandY);
+    // Sand ripple lines
+    ctx.strokeStyle = 'rgba(180,140,80,0.15)';
+    ctx.lineWidth = dpr;
+    for (let i = 0; i < 5; i++) {
+      const sy2 = sandY + (22 + i * 26) * dpr;
+      ctx.beginPath();
+      ctx.moveTo(0, sy2);
+      ctx.bezierCurveTo(W*0.25, sy2 + 4*dpr, W*0.75, sy2 - 4*dpr, W, sy2);
+      ctx.stroke();
+    }
+
+    // Water base Y
+    const waterBase = H * (1 - waterPct / 100);
+
+    // Wave function
+    const waveY = (x, layer, time) => {
+      const spd   = 0.016 + layer * 0.007;
+      const freq1 = (layers + 2) + layer * 0.9;
+      const freq2 = layers       + layer * 0.55;
+      const a     = ampD * (0.55 + layer * 0.2);
+      const ph    = layer * 1.0;
+      return (
+        a * Math.sin((x / W) * Math.PI * freq1 + time * spd * 60 + ph) +
+        a * 0.38 * Math.sin((x / W) * Math.PI * freq2 + time * (spd + 0.009) * 60)
+      );
+    };
+
+    // Draw wave layers (back → front)
+    for (let layer = layers - 1; layer >= 0; layer--) {
+      const alpha = 0.36 + layer * 0.17;
+      ctx.beginPath();
+      ctx.moveTo(0, H);
+      for (let x = 0; x <= W; x += 4 * dpr) {
+        ctx.lineTo(x, waterBase + waveY(x, layer, t));
+      }
+      ctx.lineTo(W, H);
+      ctx.closePath();
+      const wg = ctx.createLinearGradient(0, waterBase - ampD, 0, H);
+      const r = layer % 2 === 0 ? 42  : 28;
+      const g = layer % 2 === 0 ? 157 : 176;
+      const b = layer % 2 === 0 ? 143 : 200;
+      wg.addColorStop(0, `rgba(${r},${g},${b},${alpha})`);
+      wg.addColorStop(0.55, `rgba(15,88,100,0.9)`);
+      wg.addColorStop(1,    `rgba(8,48,60,0.96)`);
+      ctx.fillStyle = wg;
+      ctx.fill();
+    }
+
+    // Foam crest (front wave)
+    ctx.save();
+    ctx.shadowBlur = 8 * dpr;
+    ctx.shadowColor = 'rgba(255,255,255,0.55)';
+    ctx.strokeStyle = 'rgba(255,255,255,0.78)';
+    ctx.lineWidth = 2.5 * dpr;
+    ctx.beginPath();
+    for (let x = 0; x <= W; x += 4 * dpr) {
+      const y = waterBase + waveY(x, 0, t);
+      x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+    ctx.restore();
+
+    // Secondary foam
+    ctx.strokeStyle = 'rgba(255,255,255,0.28)';
+    ctx.lineWidth = 1.5 * dpr;
+    ctx.beginPath();
+    for (let x = 0; x <= W; x += 4 * dpr) {
+      const y = waterBase + waveY(x, 1, t) + 14 * dpr;
+      x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+
+    // Seagulls
+    birds.forEach(b => {
+      b.x += b.speed;
+      if (b.x > W + 40 * dpr) b.x = -40 * dpr;
+      const by = H * b.y + Math.sin(t * b.freq * 60 + b.phase) * b.amp * dpr;
+      const flap = Math.sin(t * 0.09 * 60 + b.phase) * b.size * 0.55;
+      ctx.beginPath();
+      ctx.moveTo(b.x, by);
+      ctx.quadraticCurveTo(b.x - b.size, by - b.size * 0.75 + flap, b.x - b.size * 2.2, by);
+      ctx.moveTo(b.x, by);
+      ctx.quadraticCurveTo(b.x + b.size, by - b.size * 0.75 + flap, b.x + b.size * 2.2, by);
+      ctx.strokeStyle = 'rgba(25,25,45,0.72)';
+      ctx.lineWidth = 1.5 * dpr;
+      ctx.stroke();
+    });
+
+    // Tide direction arrow
+    const arrowX = W * 0.055;
+    const arrowY = waterBase + 14 * dpr + Math.sin(t * 0.055 * 60) * 6 * dpr;
+    ctx.font = `bold ${22 * dpr}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.globalAlpha = 0.82;
+    ctx.fillStyle = rising ? '#7dd3c0' : '#f4a261';
+    ctx.fillText(rising ? '▲' : '▼', arrowX, arrowY);
+    ctx.globalAlpha = 1;
+
+    t += 0.016;
+    state.animFrame = requestAnimationFrame(frame);
+  }
+
+  frame();
+}
+</script>
+</body>
+</html>
